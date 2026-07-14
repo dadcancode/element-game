@@ -1,7 +1,12 @@
-import { CapsuleCollider, RigidBody } from '@react-three/rapier'
+import {
+  CapsuleCollider,
+  RigidBody,
+  useBeforePhysicsStep,
+} from '@react-three/rapier'
 import type { RapierRigidBody } from '@react-three/rapier'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useThree } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
+import type { Group } from 'three'
 import { Vector3 } from 'three'
 import {
   PLAYER_CAPSULE_HALF_HEIGHT,
@@ -16,6 +21,7 @@ import { useGameStore } from '../state/gameStore'
 
 type PlayerProps = {
   bodyRef: React.RefObject<RapierRigidBody | null>
+  visualRef: React.RefObject<Group | null>
 }
 
 type MovementInput = {
@@ -77,7 +83,7 @@ function useMovementInput() {
   return input
 }
 
-export function Player({ bodyRef }: PlayerProps) {
+export function Player({ bodyRef, visualRef }: PlayerProps) {
   const camera = useThree((state) => state.camera)
   const input = useMovementInput()
   const setIsRunning = useGameStore((state) => state.setIsRunning)
@@ -87,7 +93,7 @@ export function Player({ bodyRef }: PlayerProps) {
     return () => setIsRunning(false)
   }, [setIsRunning])
 
-  useFrame(() => {
+  useBeforePhysicsStep(() => {
     const body = bodyRef.current
     if (!body) {
       return
@@ -153,14 +159,16 @@ export function Player({ bodyRef }: PlayerProps) {
       ref={bodyRef}
     >
       <CapsuleCollider args={[PLAYER_CAPSULE_HALF_HEIGHT, PLAYER_RADIUS]} />
-      <mesh castShadow position={[0, 0, 0]}>
-        <capsuleGeometry args={[PLAYER_RADIUS, PLAYER_CAPSULE_HALF_HEIGHT * 2, 8, 16]} />
-        <meshStandardMaterial color="#f4c95d" roughness={0.55} />
-      </mesh>
-      <mesh castShadow position={[0, 0.18, 0.34]}>
-        <sphereGeometry args={[0.1, 12, 12]} />
-        <meshStandardMaterial color="#253343" emissive="#253343" />
-      </mesh>
+      <group ref={visualRef}>
+        <mesh castShadow position={[0, 0, 0]}>
+          <capsuleGeometry args={[PLAYER_RADIUS, PLAYER_CAPSULE_HALF_HEIGHT * 2, 8, 16]} />
+          <meshStandardMaterial color="#f4c95d" roughness={0.55} />
+        </mesh>
+        <mesh castShadow position={[0, 0.18, 0.34]}>
+          <sphereGeometry args={[0.1, 12, 12]} />
+          <meshStandardMaterial color="#253343" emissive="#253343" />
+        </mesh>
+      </group>
     </RigidBody>
   )
 }

@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
 import { useRef } from 'react'
 import type { RapierRigidBody } from '@react-three/rapier'
+import type { Group } from 'three'
 import { CAMERA_FAR_PLANE, WORLD_FOG_FAR, WORLD_FOG_NEAR } from './config/world'
 import { Player } from './player/Player'
 import { ThirdPersonCamera } from './player/ThirdPersonCamera'
@@ -9,6 +10,7 @@ import { World } from './world/World'
 
 function Scene() {
   const playerBody = useRef<RapierRigidBody>(null)
+  const playerVisual = useRef<Group>(null)
 
   return (
     <>
@@ -22,11 +24,11 @@ function Scene() {
         shadow-mapSize-height={2048}
         shadow-mapSize-width={2048}
       />
-      <Physics gravity={[0, -20, 0]}>
+      <Physics gravity={[0, -20, 0]} interpolate>
         <World />
-        <Player bodyRef={playerBody} />
+        <Player bodyRef={playerBody} visualRef={playerVisual} />
       </Physics>
-      <ThirdPersonCamera playerBody={playerBody} />
+      <ThirdPersonCamera playerVisual={playerVisual} />
     </>
   )
 }

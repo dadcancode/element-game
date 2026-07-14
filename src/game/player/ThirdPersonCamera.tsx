@@ -1,6 +1,6 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import type { RapierRigidBody } from '@react-three/rapier'
 import { useEffect, useRef } from 'react'
+import type { Group } from 'three'
 import { MathUtils, Vector3 } from 'three'
 import {
   CAMERA_DISTANCE,
@@ -12,14 +12,14 @@ import {
 } from '../config/player'
 
 type ThirdPersonCameraProps = {
-  playerBody: React.RefObject<RapierRigidBody | null>
+  playerVisual: React.RefObject<Group | null>
 }
 
 const target = new Vector3()
 const desiredPosition = new Vector3()
 const up = new Vector3(0, 1, 0)
 
-export function ThirdPersonCamera({ playerBody }: ThirdPersonCameraProps) {
+export function ThirdPersonCamera({ playerVisual }: ThirdPersonCameraProps) {
   const { camera, gl } = useThree()
   const yaw = useRef(0)
   const pitch = useRef(0.15)
@@ -71,13 +71,13 @@ export function ThirdPersonCamera({ playerBody }: ThirdPersonCameraProps) {
   }, [gl])
 
   useFrame((_, delta) => {
-    const body = playerBody.current
-    if (!body) {
+    const visual = playerVisual.current
+    if (!visual) {
       return
     }
 
-    const position = body.translation()
-    target.set(position.x, position.y + 0.7, position.z)
+    visual.getWorldPosition(target)
+    target.y += 0.7
 
     const horizontalDistance = CAMERA_DISTANCE * Math.cos(pitch.current)
     desiredPosition

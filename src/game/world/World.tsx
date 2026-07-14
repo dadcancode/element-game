@@ -1,4 +1,4 @@
-import { RigidBody } from '@react-three/rapier'
+import { CuboidCollider, RigidBody } from '@react-three/rapier'
 import {
   ARENA_RADIUS_X,
   ARENA_RADIUS_Z,
@@ -39,7 +39,11 @@ const arenaWalls = Array.from({ length: ARENA_WALL_SEGMENTS }, (_, index) => {
 export function World() {
   return (
     <>
-      <RigidBody colliders="trimesh" type="fixed">
+      <RigidBody colliders={false} type="fixed">
+        <CuboidCollider
+          args={[ARENA_RADIUS_X, 0.1, ARENA_RADIUS_Z]}
+          position={[0, -0.1, 0]}
+        />
         <mesh
           position={[0, -0.1, 0]}
           receiveShadow
