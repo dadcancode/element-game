@@ -1,0 +1,52 @@
+.game-app {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.game-canvas {
+  height: 100%;
+  touch-action: none;
+  width: 100%;
+}
+
+.hud {
+  color: #f7fbff;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  left: 1.5rem;
+  pointer-events: none;
+  position: absolute;
+  text-shadow: 0 2px 8px #07101ddd;
+  top: 1.5rem;
+}
+
+.hud__title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.hud__controls {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.hud__key {
+  background: #ffffff2b;
+  border: 1px solid #ffffff5c;
+  border-radius: 0.25rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.08rem 0.3rem;
+}
+
+@media (max-width: 640px) {
+  .hud {
+    left: 1rem;
+    top: 1rem;
+  }
+}
