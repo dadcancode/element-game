@@ -7,6 +7,7 @@ import { CAMERA_FAR_PLANE, WORLD_FOG_FAR, WORLD_FOG_NEAR } from './config/world'
 import { Player } from './player/Player'
 import { ThirdPersonCamera } from './player/ThirdPersonCamera'
 import { World } from './world/World'
+import { Projectiles } from './world/Projectiles'
 
 function Scene() {
   const playerBody = useRef<RapierRigidBody>(null)
@@ -27,6 +28,7 @@ function Scene() {
       <Physics gravity={[0, -20, 0]} interpolate>
         <World />
         <Player bodyRef={playerBody} visualRef={playerVisual} />
+        <Projectiles />
       </Physics>
       <ThirdPersonCamera playerVisual={playerVisual} />
     </>

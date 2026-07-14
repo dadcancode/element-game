@@ -16,8 +16,12 @@ import {
   PLAYER_RADIUS,
   PLAYER_SPAWN,
   PLAYER_SPEED,
+  PROJECTILE_COOLDOWN_MS,
+  PROJECTILE_SPAWN_FORWARD_OFFSET,
+  PROJECTILE_SPAWN_HEIGHT,
 } from '../config/player'
 import { useGameStore } from '../state/gameStore'
+import { useProjectileStore } from '../state/projectileStore'
 
 type PlayerProps = {
   bodyRef: React.RefObject<RapierRigidBody | null>
@@ -34,6 +38,7 @@ const forward = new Vector3()
 const right = new Vector3()
 const direction = new Vector3()
 const worldUp = new Vector3(0, 1, 0)
+const spawnPosition = new Vector3()
 
 function useMovementInput() {
   const input = useRef<MovementInput>({
@@ -85,13 +90,59 @@ function useMovementInput() {
 
 export function Player({ bodyRef, visualRef }: PlayerProps) {
   const camera = useThree((state) => state.camera)
+  const gl = useThree((state) => state.gl)
   const input = useMovementInput()
   const setIsRunning = useGameStore((state) => state.setIsRunning)
+  const spawnProjectile = useProjectileStore((state) => state.spawnProjectile)
+  const headingRef = useRef(0)
+  const lastShotAtRef = useRef(0)
 
   useEffect(() => {
     setIsRunning(true)
     return () => setIsRunning(false)
   }, [setIsRunning])
+
+  useEffect(() => {
+    const canvas = gl.domElement
+
+    const onMouseDown = (event: MouseEvent) => {
+      if (event.button !== 0) {
+        return
+      }
+
+      const now = performance.now()
+      if (now - lastShotAtRef.current < PROJECTILE_COOLDOWN_MS) {
+        return
+      }
+
+      const visual = visualRef.current
+      if (!visual) {
+        return
+      }
+
+      lastShotAtRef.current = now
+
+      const heading = headingRef.current
+      const dirX = Math.sin(heading)
+      const dirZ = Math.cos(heading)
+
+      visual.getWorldPosition(spawnPosition)
+      spawnPosition.y = PROJECTILE_SPAWN_HEIGHT
+      spawnPosition.x += dirX * PROJECTILE_SPAWN_FORWARD_OFFSET
+      spawnPosition.z += dirZ * PROJECTILE_SPAWN_FORWARD_OFFSET
+
+      spawnProjectile(
+        [spawnPosition.x, spawnPosition.y, spawnPosition.z],
+        [dirX, 0, dirZ],
+      )
+    }
+
+    canvas.addEventListener('mousedown', onMouseDown)
+
+    return () => {
+      canvas.removeEventListener('mousedown', onMouseDown)
+    }
+  }, [gl, spawnProjectile, visualRef])
 
   useBeforePhysicsStep(() => {
     const body = bodyRef.current
@@ -127,6 +178,7 @@ export function Player({ bodyRef, visualRef }: PlayerProps) {
       horizontalVelocityX = direction.x * PLAYER_SPEED
       horizontalVelocityZ = direction.z * PLAYER_SPEED
       const heading = Math.atan2(direction.x, direction.z)
+      headingRef.current = heading
       body.setRotation(
         {
           x: 0,

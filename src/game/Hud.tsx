@@ -12,6 +12,8 @@ export function Hud() {
         <br />
         <span className="hud__key">Space</span> to jump
         <br />
+        <span className="hud__key">Click</span> to attack
+        <br />
         Drag to look around
         <br />
         {isRunning ? 'Explore the wide oval' : 'Loading world...'}
