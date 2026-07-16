@@ -35,6 +35,7 @@ function ProjectileBody({ projectile }: { projectile: Projectile }) {
       ]}
       onCollisionEnter={handleCollision}
       position={projectile.spawnPosition}
+      userData={{ type: 'projectile' }}
     >
       <BallCollider args={[PROJECTILE_RADIUS]} />
       <mesh castShadow>

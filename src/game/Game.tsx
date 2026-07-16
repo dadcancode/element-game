@@ -8,10 +8,12 @@ import { Player } from './player/Player'
 import { ThirdPersonCamera } from './player/ThirdPersonCamera'
 import { World } from './world/World'
 import { Projectiles } from './world/Projectiles'
+import { DummyTarget } from './world/DummyTarget'
 
 function Scene() {
   const playerBody = useRef<RapierRigidBody>(null)
   const playerVisual = useRef<Group>(null)
+  const yawRef = useRef(0)
 
   return (
     <>
@@ -27,10 +29,11 @@ function Scene() {
       />
       <Physics gravity={[0, -20, 0]} interpolate>
         <World />
-        <Player bodyRef={playerBody} visualRef={playerVisual} />
+        <Player bodyRef={playerBody} visualRef={playerVisual} yawRef={yawRef} />
         <Projectiles />
+        <DummyTarget />
       </Physics>
-      <ThirdPersonCamera playerVisual={playerVisual} />
+      <ThirdPersonCamera playerVisual={playerVisual} yawRef={yawRef} />
     </>
   )
 }
