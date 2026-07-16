@@ -6,8 +6,8 @@ import {
 import type { RapierRigidBody } from '@react-three/rapier'
 import { useThree } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
-import type { Group } from 'three'
-import { Vector3 } from 'three'
+import type { Group, Object3D } from 'three'
+import { Raycaster, Vector2, Vector3 } from 'three'
 import {
   PLAYER_CAPSULE_HALF_HEIGHT,
   PLAYER_GROUNDED_HEIGHT,
@@ -17,6 +17,7 @@ import {
   PLAYER_SPAWN,
   PLAYER_SPEED,
   PROJECTILE_COOLDOWN_MS,
+  PROJECTILE_MAX_AIM_DISTANCE,
   PROJECTILE_SPAWN_FORWARD_OFFSET,
   PROJECTILE_SPAWN_HEIGHT,
 } from '../config/player'
@@ -26,6 +27,7 @@ import { useProjectileStore } from '../state/projectileStore'
 type PlayerProps = {
   bodyRef: React.RefObject<RapierRigidBody | null>
   visualRef: React.RefObject<Group | null>
+  yawRef: React.RefObject<number>
 }
 
 type MovementInput = {
@@ -39,6 +41,21 @@ const right = new Vector3()
 const direction = new Vector3()
 const worldUp = new Vector3(0, 1, 0)
 const spawnPosition = new Vector3()
+const shotDirection = new Vector3()
+const aimTargetPoint = new Vector3()
+const pointerNdc = new Vector2()
+const aimRaycaster = new Raycaster()
+
+function isDescendantOf(object: Object3D, ancestor: Object3D) {
+  let node: Object3D | null = object
+  while (node) {
+    if (node === ancestor) {
+      return true
+    }
+    node = node.parent
+  }
+  return false
+}
 
 function useMovementInput() {
   const input = useRef<MovementInput>({
@@ -88,13 +105,13 @@ function useMovementInput() {
   return input
 }
 
-export function Player({ bodyRef, visualRef }: PlayerProps) {
+export function Player({ bodyRef, visualRef, yawRef }: PlayerProps) {
   const camera = useThree((state) => state.camera)
   const gl = useThree((state) => state.gl)
+  const scene = useThree((state) => state.scene)
   const input = useMovementInput()
   const setIsRunning = useGameStore((state) => state.setIsRunning)
   const spawnProjectile = useProjectileStore((state) => state.spawnProjectile)
-  const headingRef = useRef(0)
   const lastShotAtRef = useRef(0)
 
   useEffect(() => {
@@ -122,18 +139,33 @@ export function Player({ bodyRef, visualRef }: PlayerProps) {
 
       lastShotAtRef.current = now
 
-      const heading = headingRef.current
-      const dirX = Math.sin(heading)
-      const dirZ = Math.cos(heading)
+      const rect = canvas.getBoundingClientRect()
+      pointerNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      pointerNdc.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      aimRaycaster.setFromCamera(pointerNdc, camera)
+
+      // Find the exact world point the player clicked on, ignoring their own
+      // body, so the shot travels to whatever is actually visible there.
+      const hits = aimRaycaster.intersectObjects(scene.children, true)
+      const hit = hits.find((candidate) => !isDescendantOf(candidate.object, visual))
+
+      if (hit) {
+        aimTargetPoint.copy(hit.point)
+      } else {
+        aimTargetPoint
+          .copy(aimRaycaster.ray.origin)
+          .addScaledVector(aimRaycaster.ray.direction, PROJECTILE_MAX_AIM_DISTANCE)
+      }
 
       visual.getWorldPosition(spawnPosition)
       spawnPosition.y = PROJECTILE_SPAWN_HEIGHT
-      spawnPosition.x += dirX * PROJECTILE_SPAWN_FORWARD_OFFSET
-      spawnPosition.z += dirZ * PROJECTILE_SPAWN_FORWARD_OFFSET
+
+      shotDirection.subVectors(aimTargetPoint, spawnPosition).normalize()
+      spawnPosition.addScaledVector(shotDirection, PROJECTILE_SPAWN_FORWARD_OFFSET)
 
       spawnProjectile(
         [spawnPosition.x, spawnPosition.y, spawnPosition.z],
-        [dirX, 0, dirZ],
+        [shotDirection.x, shotDirection.y, shotDirection.z],
       )
     }
 
@@ -142,7 +174,7 @@ export function Player({ bodyRef, visualRef }: PlayerProps) {
     return () => {
       canvas.removeEventListener('mousedown', onMouseDown)
     }
-  }, [gl, spawnProjectile, visualRef])
+  }, [camera, gl, scene, spawnProjectile, visualRef])
 
   useBeforePhysicsStep(() => {
     const body = bodyRef.current
@@ -162,12 +194,23 @@ export function Player({ bodyRef, visualRef }: PlayerProps) {
     }
     movement.jumpQueued = false
 
+    // The character always faces the same way as the camera: turning the
+    // camera turns the body, like a standard third-person shooter.
+    const yaw = yawRef.current
+    body.setRotation(
+      {
+        x: 0,
+        y: Math.sin(yaw / 2),
+        z: 0,
+        w: Math.cos(yaw / 2),
+      },
+      true,
+    )
+
     let horizontalVelocityX = 0
     let horizontalVelocityZ = 0
     if (movement.forward !== 0 || movement.right !== 0) {
-      camera.getWorldDirection(forward)
-      forward.y = 0
-      forward.normalize()
+      forward.set(Math.sin(yaw), 0, Math.cos(yaw))
       right.crossVectors(forward, worldUp).normalize()
       direction
         .copy(forward)
@@ -177,17 +220,6 @@ export function Player({ bodyRef, visualRef }: PlayerProps) {
 
       horizontalVelocityX = direction.x * PLAYER_SPEED
       horizontalVelocityZ = direction.z * PLAYER_SPEED
-      const heading = Math.atan2(direction.x, direction.z)
-      headingRef.current = heading
-      body.setRotation(
-        {
-          x: 0,
-          y: Math.sin(heading / 2),
-          z: 0,
-          w: Math.cos(heading / 2),
-        },
-        true,
-      )
     }
 
     body.setLinvel(

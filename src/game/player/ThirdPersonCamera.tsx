@@ -13,15 +13,15 @@ import {
 
 type ThirdPersonCameraProps = {
   playerVisual: React.RefObject<Group | null>
+  yawRef: React.RefObject<number>
 }
 
 const target = new Vector3()
 const desiredPosition = new Vector3()
 const up = new Vector3(0, 1, 0)
 
-export function ThirdPersonCamera({ playerVisual }: ThirdPersonCameraProps) {
+export function ThirdPersonCamera({ playerVisual, yawRef }: ThirdPersonCameraProps) {
   const { camera, gl } = useThree()
-  const yaw = useRef(0)
   const pitch = useRef(0.15)
   const isDragging = useRef(false)
 
@@ -38,7 +38,7 @@ export function ThirdPersonCamera({ playerVisual }: ThirdPersonCameraProps) {
         return
       }
 
-      yaw.current -= event.movementX * CAMERA_ROTATION_SENSITIVITY
+      yawRef.current -= event.movementX * CAMERA_ROTATION_SENSITIVITY
       pitch.current = MathUtils.clamp(
         pitch.current - event.movementY * CAMERA_ROTATION_SENSITIVITY,
         CAMERA_MIN_PITCH,
@@ -68,7 +68,7 @@ export function ThirdPersonCamera({ playerVisual }: ThirdPersonCameraProps) {
       canvas.removeEventListener('pointercancel', onPointerUp)
       canvas.removeEventListener('contextmenu', onContextMenu)
     }
-  }, [gl])
+  }, [gl, yawRef])
 
   useFrame((_, delta) => {
     const visual = playerVisual.current
@@ -84,9 +84,9 @@ export function ThirdPersonCamera({ playerVisual }: ThirdPersonCameraProps) {
       .set(
         0,
         CAMERA_HEIGHT + CAMERA_DISTANCE * Math.sin(pitch.current),
-        horizontalDistance,
+        -horizontalDistance,
       )
-      .applyAxisAngle(up, yaw.current)
+      .applyAxisAngle(up, yawRef.current)
       .add(target)
 
     camera.position.lerp(
