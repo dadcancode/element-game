@@ -63,14 +63,8 @@ npm run build
 
 ## Development Roadmap
 
-1. **Movement foundation — complete:** third-person camera, movement, collision, jump, and a larger local arena.
-2. **Core gameplay:** decide the game's main player activity; add interaction, a clear objective, a basic HUD, and a simple fail/success loop.
-3. **Vertical slice:** create one polished biome/area with temporary or CC0 art, sound, menus, and enough gameplay to demonstrate the intended game.
-4. **Open-world foundation:** replace the single arena with streamed terrain tiles, nearby collision loading, instanced props, fog/culling, and level-of-detail models.
-5. **Large-world support:** add floating origin before travel distances become large; measure memory and frame time on target devices as tile density increases.
-6. **Production systems:** add save data, settings, accessibility options, content tools, telemetry only if appropriate, and automated tests for gameplay-critical logic.
-7. **Multiplayer decision:** design networking only after the local single-player loop performs well and is fun. A Fortnite-sized online game is a separate major architecture effort.
-8. **Release:** playtest regularly, fix the highest-impact issues, optimize target devices, and deploy to free static hosting such as GitHub Pages or Cloudflare Pages.
+See `ROADMAP.md` for the current feature development roadmap (the elemental
+team-siege game concept and its milestone build order).
 
 ## Large Map Guidance
 
